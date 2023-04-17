@@ -81,6 +81,7 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--target_images_dir", type=str, required=True)
+    parser.add_argument("--logfile", type=str, required=False, default="training.log")
     parser.add_argument("--model_output_dir", type=str, required=False)
     parser.add_argument("--model_name", type=str, required=False, default=DEFAULT_MODEL_NAME)
     parser.add_argument("--placeholder_token", type=str, required=False, default="<*>")
@@ -89,5 +90,12 @@ if __name__ == "__main__":
     parser.add_argument("--train", type=bool, required=False, default=True)
     args = parser.parse_args()
 
+    with open(args.logfile, "w") as f:
+        f.write("Running textual inversion training with the following arguments:")
+        f.write(str(args))
+
     main(args.target_images_dir, args.initializer_token, args.model_output_dir, args.model_name, args.placeholder_token,
          args.generated_images_dir, args.train)
+
+    with open(args.logfile, "a") as f:
+        f.write("Training completed successfully.")
