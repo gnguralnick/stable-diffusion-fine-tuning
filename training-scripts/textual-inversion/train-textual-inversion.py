@@ -36,6 +36,7 @@ def run_training(target_images_dir, model_output_dir, model_name, placeholder_to
         --learning_rate={hyperparameters['learning_rate']} --scale_lr \
         --lr_scheduler=\"{hyperparameters['lr_scheduler']}\" \
         --lr_warmup_steps={hyperparameters['lr_warmup_steps']} \
+        --enable_xformers_memory_efficient_attention \
         --seed={hyperparameters['seed']} \
         --output_dir={model_output_dir}")
     # return whether the training was successful
