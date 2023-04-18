@@ -9,7 +9,7 @@ HYPERPARAMETERS = {
     "resolution": 512,
     "train_batch_size": 1,
     "gradient_accumulation_steps": 4,
-    "max_train_steps": 3000,
+    "max_train_steps": 1000,
     "learning_rate": 5.0e-4,
     "lr_scheduler": "constant",
     "lr_warmup_steps": 0,
@@ -58,7 +58,7 @@ def run_inference(model_output_path, generated_images_dir, placeholder_token, hy
 
 
 def main(target_images_dir, initializer_token="object", model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
-         placeholder_token="<*>", generated_images_dir=None, train=False):
+         placeholder_token="<*>", generated_images_dir=None, train=True, train_log="training.log"):
     target_images_dir_name = args.target_images_dir.split("/")[-1]
 
     if model_output_dir is None:
@@ -66,16 +66,28 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
     if generated_images_dir is None:
         generated_images_dir = f"../../generated-images/textual-inversion/{target_images_dir_name}"
 
+    os.system(f"rm -rf {generated_images_dir}")
+
+    with open(train_log, "w") as f:
+        f.write(f"Running textual inversion training for the target images in {target_images_dir}.")
+
     if train:
         model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
-                                         placeholder_token, initializer_token, HYPERPARAMETERS)
+                                                 placeholder_token, initializer_token, HYPERPARAMETERS)
     else:
         model_training_successful = True
+
     if model_training_successful:
-        model_output_path = f"{model_output_dir}/checkpoint-{HYPERPARAMETERS['max_train_steps']}"
+        model_output_path = model_output_dir
     else:
         sys.exit("Model training failed. Exiting.")
+
+    with open(train_log, "a") as f:
+        f.write("Training completed successfully, beginning inference.")
     run_inference(model_output_path, generated_images_dir, placeholder_token, HYPERPARAMETERS)
+
+    with open(train_log, "a") as f:
+        f.write("Inference completed successfully.")
 
 
 if __name__ == "__main__":
@@ -90,12 +102,5 @@ if __name__ == "__main__":
     parser.add_argument("--train", type=bool, required=False, default=True)
     args = parser.parse_args()
 
-    with open(args.logfile, "w") as f:
-        f.write("Running textual inversion training with the following arguments:")
-        f.write(str(args))
-
     main(args.target_images_dir, args.initializer_token, args.model_output_dir, args.model_name, args.placeholder_token,
-         args.generated_images_dir, args.train)
-
-    with open(args.logfile, "a") as f:
-        f.write("Training completed successfully.")
+         args.generated_images_dir, args.train, args.logfile)
