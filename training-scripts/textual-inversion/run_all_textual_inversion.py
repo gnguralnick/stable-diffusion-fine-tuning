@@ -8,4 +8,4 @@ if __name__ == "__main__":
     #      placeholder_token="<*>", generated_images_dir=None, train=True, train_log="training.log")
 
     for subdir in os.listdir("../../target-images"):
-        main(f"../../target-images/{subdir}", train_log=f"{getcwd()}/{subdir}.log")
+        main(f"../../target-images/{subdir}", train_log=f"{getcwd()}/training-logs/{subdir}.log")
