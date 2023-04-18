@@ -52,6 +52,7 @@ def run_inference(generated_images_dir, placeholder_token, hyperparameters,
     if not complex_prompt:
         prompt = BASIC_PROMPT.replace("<placeholder>", placeholder_token)
         prompts = [prompt] * hyperparameters['num_generations']
+        full_prompts = prompts
     else:
         full_prompts = [edit_prompt.replace("<placeholder>", placeholder_token) for edit_prompt in edit_prompts]
         prompts = random.sample(full_prompts, hyperparameters['num_generations'])
@@ -78,11 +79,15 @@ def run_inference(generated_images_dir, placeholder_token, hyperparameters,
 
     for i in range(len(prompts)):
         prompt = prompts[i]
+        if complex_prompt:
+            prompt_index = full_prompts.index(prompt)
+        else:
+            prompt_index = None
         image = pipe(prompt,
                      num_inference_steps=hyperparameters['num_inference_steps'],
                      guidance_scale=hyperparameters['guidance_scale']).images[0]
 
-        image.save(f"{subdir}/image_{i}.png")
+        image.save(f"{subdir}/image_{i}-{prompt_index if prompt_index is not None else ''}.png")
 
 
 if __name__ == "__main__":
