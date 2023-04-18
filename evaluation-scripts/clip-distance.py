@@ -2,22 +2,12 @@
 # Note: ChatGPT was used to assist in the creation of this script.
 
 import os
-import sys
 import argparse
 import torch
 import torchvision.transforms as transforms
-from PIL import Image
 from transformers import CLIPModel
 from torch.nn.functional import cosine_similarity
-
-
-def load_images_from_directory(directory):
-    image_files = [f for f in os.listdir(directory) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    images = []
-    for file in image_files:
-        image = Image.open(os.path.join(directory, file))
-        images.append(image)
-    return images
+from load_images import load_images_from_directory
 
 
 def compute_clip_cosine_similarity(target_images, generated_images):
@@ -47,20 +37,24 @@ def compute_clip_cosine_similarity(target_images, generated_images):
     return avg_cosine_similarity
 
 
-def main(args):
-    target_images = load_images_from_directory(args.target_images_dir)
-    if args.generated_images_dir is None:
-        generated_images_dir = args.target_images_dir.replace('target', 'generated') + f'/{args.method_name}'
+def main(target_images_dir, method_name, eval_output_dir=None, generated_images_dir=None):
+    target_images = load_images_from_directory(target_images_dir)
+    target_images_dir_name = target_images_dir.split('/')[-1]
+    if generated_images_dir is None:
+        generated_images_dir = target_images_dir.replace('target', 'generated') + f'/{method_name}'
     else:
-        generated_images_dir = args.generated_images_dir
+        generated_images_dir = generated_images_dir
     generated_images = load_images_from_directory(generated_images_dir)
 
     avg_cosine_similarity = compute_clip_cosine_similarity(target_images, generated_images)
 
     print(f"Average CLIP Cosine Similarity: {avg_cosine_similarity}")
 
-    os.makedirs(args.eval_output_dir, exist_ok=True)
-    output_file = os.path.join(args.eval_output_dir, f"{args.method_name}.txt")
+    if eval_output_dir is None:
+        eval_output_dir = f'../../evaluation-results/clip-distance/{target_images_dir_name}'
+
+    os.makedirs(eval_output_dir, exist_ok=True)
+    output_file = os.path.join(args.eval_output_dir, f"{method_name}.txt")
 
     with open(output_file, 'w') as f:
         f.write(f"Average CLIP Cosine Similarity: {avg_cosine_similarity}\n")
@@ -71,9 +65,9 @@ if __name__ == "__main__":
     parser.add_argument("--target_images_dir", type=str, help="Path to the directory containing target images.")
     parser.add_argument("--generated_images_dir", type=str, required=False, help="Path to the directory containing generated images.")
     parser.add_argument("--method_name", type=str, help="Name of the method used for generating images.")
-    parser.add_argument("--eval_output_dir", type=str,
+    parser.add_argument("--eval_output_dir", required=False, type=str,
                         help="Path to the directory where evaluation results will be saved.")
 
 
     args = parser.parse_args()
-    main(args)
+    main(args.target_images_dir, args.method_name, args.eval_output_dir, args.generated_images_dir)
