@@ -16,7 +16,7 @@ HYPERPARAMETERS = {
     "num_inference_steps": 50,
     "guidance_scale": 7.5,
     "seed": 42,
-    "num_generations": 4,
+    "num_generations": 30,
 }
 
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
@@ -39,6 +39,7 @@ def run_training(target_images_dir, model_output_dir, model_name, placeholder_to
         --lr_scheduler=\"{hyperparameters['lr_scheduler']}\" \
         --lr_warmup_steps={hyperparameters['lr_warmup_steps']} \
         --enable_xformers_memory_efficient_attention \
+        --checkpoints_total_limit=1 \
         --seed={hyperparameters['seed']} \
         --output_dir={model_output_dir}"
     if resume_checkpoint:
@@ -56,6 +57,7 @@ def run_inference(model_name, learned_embeddings_path, generated_images_dir, pla
                                 local_files_only=True)
 
     prompt = f"A photo of a {placeholder_token}"
+
 
     for i in range(hyperparameters['num_generations']):
         image = pipe(prompt,
