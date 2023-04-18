@@ -68,7 +68,7 @@ def run_inference(model_name, learned_embeddings_path, generated_images_dir, pla
 def main(target_images_dir, initializer_token="object", model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
          placeholder_token="<*>", generated_images_dir=None, no_train=False, train_log="training.log",
          resume_checkpoint=None):
-    target_images_dir_name = args.target_images_dir.split("/")[-1]
+    target_images_dir_name = target_images_dir.split("/")[-1]
 
     if model_output_dir is None:
         model_output_dir = f"../../fine-tuned-models/textual-inversion/{target_images_dir_name}"
