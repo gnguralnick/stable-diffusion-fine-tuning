@@ -47,9 +47,11 @@ def run_training(target_images_dir, model_output_dir, model_name, placeholder_to
     return os.path.exists(f"{model_output_dir}/checkpoint-{hyperparameters['max_train_steps']}")
 
 
-def run_inference(model_output_path, generated_images_dir, placeholder_token, hyperparameters):
-    model_id = model_output_path
+def run_inference(model_name, learned_embeddings_path, generated_images_dir, placeholder_token, hyperparameters):
+    model_id = model_name
     pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
+    pipe.load_textual_inversion(learned_embeddings_path,
+                                weight_name=f"learned_embeds-steps-{hyperparameters['max_train_steps']}.bin", local_files_only=True)
 
     prompt = f"A photo of a {placeholder_token}"
 
@@ -99,7 +101,7 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
 
     with open(train_log, "a") as f:
         f.write("Training completed successfully, beginning inference.\n")
-    run_inference(model_output_path, generated_images_dir, placeholder_token, HYPERPARAMETERS)
+    run_inference(model_name, model_output_path, generated_images_dir, placeholder_token, HYPERPARAMETERS)
 
     with open(train_log, "a") as f:
         f.write("Inference completed successfully.")
