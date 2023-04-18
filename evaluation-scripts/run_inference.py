@@ -11,17 +11,17 @@ HYPERPARAMETERS = {
     "num_generations": 10
 }
 
-edit_prompts = [
-    "A photo of a <placeholder> in a forest",
-    "A photo of a <placeholder> in a city",
-    "A photo of a <placeholder> in a desert",
-    "An oil painting of a <placeholder>",
-    "A photo of a <placeholder> in a field",
-    "Elmo holding a <placeholder>",
-    "A photo of a <placeholder> in a kitchen",
-    "A photo of a <placeholder> in a bedroom",
-    "A painting of a <placeholder> in a forest",
-]
+edit_prompts = {
+    "forest": "A photo of a <placeholder> in a forest",
+    "city": "A photo of a <placeholder> in a city",
+    "desert": "A photo of a <placeholder> in a desert",
+    "painting": "An oil painting of a <placeholder>",
+    "field": "A photo of a <placeholder> in a field",
+    "elmo": "Elmo holding a <placeholder>",
+    "kitchen": "A photo of a <placeholder> in a kitchen",
+    "bedroom": "A photo of a <placeholder> in a bedroom",
+    "forest_painting": "A painting of a <placeholder> in a forest",
+}
 
 BASIC_PROMPT = "A photo of a <placeholder>"
 
@@ -30,12 +30,11 @@ DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 
 def run_inference(generated_images_dir, placeholder_token, hyperparameters,
                   method, target_name, model_path=DEFAULT_MODEL_NAME, learned_embeddings_path=None,
-                  checkpoint_steps=None, complex_prompt=False):
+                  checkpoint_steps=None):
     print(f"Running inference for {target_name} from method {method}")
     print(f"Model path: {model_path}")
     print(f"Learned embeddings path: {learned_embeddings_path}")
     print(f"Checkpoint steps: {checkpoint_steps}")
-    print(f"Complex prompt: {complex_prompt}")
 
     model_id = model_path
     if torch.cuda.is_available():
@@ -49,45 +48,36 @@ def run_inference(generated_images_dir, placeholder_token, hyperparameters,
                                     weight_name=weight_name,
                                     local_files_only=True)
 
-    if not complex_prompt:
-        prompt = BASIC_PROMPT.replace("<placeholder>", placeholder_token)
-        prompts = [prompt] * hyperparameters['num_generations']
-        full_prompts = prompts
-    else:
-        full_prompts = [edit_prompt.replace("<placeholder>", placeholder_token) for edit_prompt in edit_prompts]
-        prompts = random.sample(full_prompts, hyperparameters['num_generations'])
-
     subdir = generated_images_dir + f"/{method}"
     if not os.path.exists(subdir):
         os.makedirs(subdir)
     subdir += f"/{target_name}/"
     if not os.path.exists(subdir):
         os.makedirs(subdir)
-    subdir += "complex" if complex_prompt else "basic"
-    subdir += f"-{checkpoint_steps}" if checkpoint_steps else ""
-    if not os.path.exists(subdir):
-        os.makedirs(subdir)
-    else:
-        # prompt user to confirm deletion of existing files
-        resp = input(f"Directory {subdir} already exists. Delete existing files? [y/n] ")
-        if resp.lower() == "n":
-            return
-        for f in os.listdir(subdir):
-            os.remove(os.path.join(subdir, f))
+    subdir_basic = subdir + "basic/"
+    subdirs_complex = [subdir + f"{edit_prompt}/" for edit_prompt in edit_prompts]
+    if not os.path.exists(subdir_basic):
+        os.makedirs(subdir_basic)
+    for subdir_complex in subdirs_complex:
+        if not os.path.exists(subdir_complex):
+            os.makedirs(subdir_complex)
 
     print(f"Saving images to {subdir}...")
 
-    for i in range(len(prompts)):
-        prompt = prompts[i]
-        if complex_prompt:
-            prompt_index = full_prompts.index(prompt)
-        else:
-            prompt_index = None
-        image = pipe(prompt,
+    for i in range(hyperparameters['num_generations']):
+        image = pipe(BASIC_PROMPT.replace("<placeholder>", placeholder_token),
                      num_inference_steps=hyperparameters['num_inference_steps'],
                      guidance_scale=hyperparameters['guidance_scale']).images[0]
 
-        image.save(f"{subdir}/image_{i}-{prompt_index if prompt_index is not None else ''}.png")
+        image.save(f"{subdir_basic}/image_{i}{f'-checkpoint-{checkpoint_steps}' if checkpoint_steps else ''}.png")
+
+        for j in range(len(edit_prompts)):
+            image = pipe(edit_prompts[j].replace("<placeholder>", placeholder_token),
+                         num_inference_steps=hyperparameters['num_inference_steps'],
+                         guidance_scale=hyperparameters['guidance_scale']).images[0]
+
+            image.save(
+                f"{subdirs_complex[j]}/image_{i}{f'-checkpoint-{checkpoint_steps}' if checkpoint_steps else ''}.png")
 
 
 if __name__ == "__main__":
@@ -103,4 +93,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_inference(args.generated_images_dir, args.placeholder_token, HYPERPARAMETERS,
-                  args.method, args.target_name, args.model_output_path, args.learned_embeddings_path, args.checkpoint_steps, args.complex_prompt)
+                  args.method, args.target_name, args.model_output_path, args.learned_embeddings_path,
+                  args.checkpoint_steps)
