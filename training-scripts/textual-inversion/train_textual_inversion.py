@@ -62,7 +62,7 @@ def run_inference(model_output_path, generated_images_dir, placeholder_token, hy
 
 
 def main(target_images_dir, initializer_token="object", model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
-         placeholder_token="<*>", generated_images_dir=None, train=True, train_log="training.log", resume_checkpoint=None):
+         placeholder_token="<*>", generated_images_dir=None, no_train=False, train_log="training.log", resume_checkpoint=None):
     target_images_dir_name = args.target_images_dir.split("/")[-1]
 
     if model_output_dir is None:
@@ -72,7 +72,7 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
 
     os.system(f"rm -rf {generated_images_dir}")
 
-    if not train:
+    if no_train:
         if not os.path.exists(model_output_dir):
             sys.exit(f"Model output directory {model_output_dir} does not exist. Exiting.")
         with open(train_log, "a") as f:
@@ -114,9 +114,9 @@ if __name__ == "__main__":
     parser.add_argument("--placeholder_token", type=str, required=False, default="<*>")
     parser.add_argument("--initializer_token", type=str, required=False, default="object")
     parser.add_argument("--generated_images_dir", type=str, required=False)
-    parser.add_argument("--train", type=bool, required=False, default=True)
+    parser.add_argument("--no_train", type=bool, required=False, default=False)
     parser.add_argument("--resume_checkpoint", type=str, required=False)
     args = parser.parse_args()
 
     main(args.target_images_dir, args.initializer_token, args.model_output_dir, args.model_name, args.placeholder_token,
-         args.generated_images_dir, args.train, args.logfile, args.resume_checkpoint)
+         args.generated_images_dir, args.no_train, args.logfile, args.resume_checkpoint)
