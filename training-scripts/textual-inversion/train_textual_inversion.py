@@ -57,7 +57,7 @@ def run_inference(model_name, learned_embeddings_path, generated_images_dir, pla
 
     images = pipe(prompt,
                   num_inference_steps=hyperparameters['num_inference_steps'],
-                  guidance_scale=hyperparameters['guidance_scale'])
+                  guidance_scale=hyperparameters['guidance_scale']).images
 
     for i, image in enumerate(images):
         image.save(f"{generated_images_dir}/image_{i}.png")
