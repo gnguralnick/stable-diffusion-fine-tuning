@@ -3,7 +3,6 @@ import os
 
 from diffusers import StableDiffusionPipeline
 import torch
-from numpy import random
 
 HYPERPARAMETERS = {
     "num_inference_steps": 50,
