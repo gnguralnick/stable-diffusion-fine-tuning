@@ -52,7 +52,7 @@ def run_inference(model_name, learned_embeddings_path, generated_images_dir, pla
     model_id = model_name
     pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
     pipe.load_textual_inversion(learned_embeddings_path,
-                                weight_name=f"learned_embeds-steps-{hyperparameters['max_train_steps']}.bin",
+                                weight_name=f"learned_embeds.bin",
                                 local_files_only=True)
 
     prompt = f"A photo of a {placeholder_token}"
@@ -65,7 +65,7 @@ def run_inference(model_name, learned_embeddings_path, generated_images_dir, pla
         image.save(f"{generated_images_dir}/image_{i}.png")
 
 
-def main(target_images_dir, initializer_token="object", model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
+def main(target_images_dir, initializer_token=None, model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
          placeholder_token="<*>", generated_images_dir=None, no_train=False, train_log="training.log",
          resume_checkpoint=None):
     target_images_dir_name = target_images_dir.split("/")[-1]
@@ -77,6 +77,9 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
 
     os.system(f"rm -rf {generated_images_dir}")
     os.system(f"mkdir -p {generated_images_dir}")
+
+    if initializer_token is None:
+        initializer_token = target_images_dir_name
 
     print(f"Model output directory: {model_output_dir}\n")
     print(f"Generated images directory: {generated_images_dir}\n")
@@ -136,7 +139,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_output_dir", type=str, required=False)
     parser.add_argument("--model_name", type=str, required=False, default=DEFAULT_MODEL_NAME)
     parser.add_argument("--placeholder_token", type=str, required=False, default="<*>")
-    parser.add_argument("--initializer_token", type=str, required=False, default="object")
+    parser.add_argument("--initializer_token", type=str, required=False)
     parser.add_argument("--generated_images_dir", type=str, required=False)
     parser.add_argument("--no_train", type=bool, required=False, default=False)
     parser.add_argument("--resume_checkpoint", type=str, required=False)
