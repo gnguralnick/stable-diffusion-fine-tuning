@@ -9,13 +9,14 @@ HYPERPARAMETERS = {
     "resolution": 512,
     "train_batch_size": 1,
     "gradient_accumulation_steps": 4,
-    "max_train_steps": 1000,
+    "max_train_steps": 2000,
     "learning_rate": 5.0e-4,
     "lr_scheduler": "constant",
     "lr_warmup_steps": 0,
     "num_inference_steps": 50,
     "guidance_scale": 7.5,
-    "seed": 42
+    "seed": 42,
+    "num_generations": 5,
 }
 
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
@@ -51,20 +52,22 @@ def run_inference(model_name, learned_embeddings_path, generated_images_dir, pla
     model_id = model_name
     pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
     pipe.load_textual_inversion(learned_embeddings_path,
-                                weight_name=f"learned_embeds-steps-{hyperparameters['max_train_steps']}.bin", local_files_only=True)
+                                weight_name=f"learned_embeds-steps-{hyperparameters['max_train_steps']}.bin",
+                                local_files_only=True)
 
     prompt = f"A photo of a {placeholder_token}"
 
-    images = pipe(prompt,
-                  num_inference_steps=hyperparameters['num_inference_steps'],
-                  guidance_scale=hyperparameters['guidance_scale']).images
+    for i in range(hyperparameters['num_generations']):
+        image = pipe(prompt,
+                     num_inference_steps=hyperparameters['num_inference_steps'],
+                     guidance_scale=hyperparameters['guidance_scale']).images[0]
 
-    for i, image in enumerate(images):
         image.save(f"{generated_images_dir}/image_{i}.png")
 
 
 def main(target_images_dir, initializer_token="object", model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
-         placeholder_token="<*>", generated_images_dir=None, no_train=False, train_log="training.log", resume_checkpoint=None):
+         placeholder_token="<*>", generated_images_dir=None, no_train=False, train_log="training.log",
+         resume_checkpoint=None):
     target_images_dir_name = args.target_images_dir.split("/")[-1]
 
     if model_output_dir is None:
@@ -91,7 +94,8 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
         with open(train_log, "a") as f:
             f.write(f"Resuming training from checkpoint {resume_checkpoint}.\n")
         model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
-                                                placeholder_token, initializer_token, HYPERPARAMETERS, resume_checkpoint)
+                                                 placeholder_token, initializer_token, HYPERPARAMETERS,
+                                                 resume_checkpoint)
 
     if model_training_successful:
         model_output_path = model_output_dir
