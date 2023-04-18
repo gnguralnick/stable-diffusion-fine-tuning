@@ -77,17 +77,17 @@ def main(target_images_dir, model_output_dir=None, model_name=DEFAULT_MODEL_NAME
     else:
         model_training_successful = True
 
-    if model_training_successful:
-        model_output_path = model_output_dir
-    else:
+    # if model_training_successful:
+    #     model_output_path = model_output_dir
+    if not model_training_successful:
         sys.exit("Model training failed. Exiting.")
 
     with open(train_log, "a") as f:
-        f.write("Training completed successfully, beginning inference.")
-    run_inference(model_output_path, generated_images_dir, inference_prompt, HYPERPARAMETERS)
-
-    with open(train_log, "a") as f:
-        f.write("Inference completed successfully.")
+        f.write("Training completed successfully.")
+    # run_inference(model_output_path, generated_images_dir, inference_prompt, HYPERPARAMETERS)
+    #
+    # with open(train_log, "a") as f:
+    #     f.write("Inference completed successfully.")
 
 
 if __name__ == "__main__":
