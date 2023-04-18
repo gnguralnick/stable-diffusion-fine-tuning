@@ -84,8 +84,11 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
     else:
         with open(train_log, "a") as f:
             f.write(f"Resuming training from checkpoint {resume_checkpoint}.\n")
-        model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
-                                                 placeholder_token, initializer_token, HYPERPARAMETERS, resume_checkpoint)
+        if train:
+            model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
+                                                    placeholder_token, initializer_token, HYPERPARAMETERS, resume_checkpoint)
+        else:
+            model_training_successful = True
 
     if model_training_successful:
         model_output_path = model_output_dir
