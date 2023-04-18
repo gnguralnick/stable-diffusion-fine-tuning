@@ -72,23 +72,23 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
 
     os.system(f"rm -rf {generated_images_dir}")
 
-    if not resume_checkpoint:
+    if not train:
+        if not os.path.exists(model_output_dir):
+            sys.exit(f"Model output directory {model_output_dir} does not exist. Exiting.")
+        with open(train_log, "a") as f:
+            f.write(f"Skipping training for the target images in {target_images_dir}.\n")
+        model_training_successful = True
+    elif not resume_checkpoint:
         with open(train_log, "w") as f:
             f.write(f"Running textual inversion training for the target images in {target_images_dir}.\n")
 
-        if train:
-            model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
-                                                     placeholder_token, initializer_token, HYPERPARAMETERS)
-        else:
-            model_training_successful = True
+        model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
+                                                 placeholder_token, initializer_token, HYPERPARAMETERS)
     else:
         with open(train_log, "a") as f:
             f.write(f"Resuming training from checkpoint {resume_checkpoint}.\n")
-        if train:
-            model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
-                                                    placeholder_token, initializer_token, HYPERPARAMETERS, resume_checkpoint)
-        else:
-            model_training_successful = True
+        model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
+                                                placeholder_token, initializer_token, HYPERPARAMETERS, resume_checkpoint)
 
     if model_training_successful:
         model_output_path = model_output_dir
