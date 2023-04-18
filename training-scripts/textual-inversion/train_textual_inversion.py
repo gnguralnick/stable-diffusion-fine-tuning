@@ -1,8 +1,5 @@
 import os
 import sys
-
-from diffusers import StableDiffusionPipeline
-import torch
 import argparse
 
 HYPERPARAMETERS = {
@@ -16,7 +13,6 @@ HYPERPARAMETERS = {
     "num_inference_steps": 50,
     "guidance_scale": 7.5,
     "seed": 42,
-    "num_generations": 30,
 }
 
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
@@ -46,25 +42,7 @@ def run_training(target_images_dir, model_output_dir, model_name, placeholder_to
         command += f" --resume_from_checkpoint={resume_checkpoint}"
     os.system(command)
     # return whether the training was successful
-    return os.path.exists(f"{model_output_dir}/checkpoint-{hyperparameters['max_train_steps']}")
-
-
-def run_inference(model_name, learned_embeddings_path, generated_images_dir, placeholder_token, hyperparameters):
-    model_id = model_name
-    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
-    pipe.load_textual_inversion(learned_embeddings_path,
-                                weight_name=f"learned_embeds.bin",
-                                local_files_only=True)
-
-    prompt = f"A photo of a {placeholder_token}"
-
-
-    for i in range(hyperparameters['num_generations']):
-        image = pipe(prompt,
-                     num_inference_steps=hyperparameters['num_inference_steps'],
-                     guidance_scale=hyperparameters['guidance_scale']).images[0]
-
-        image.save(f"{generated_images_dir}/image_{i}.png")
+    return os.path.exists(f"{model_output_dir}/learned_embeds.bin")
 
 
 def main(target_images_dir, initializer_token=None, model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
@@ -118,20 +96,20 @@ def main(target_images_dir, initializer_token=None, model_output_dir=None, model
         model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
                                                  placeholder_token, initializer_token, HYPERPARAMETERS,
                                                  resume_checkpoint)
-
-    if model_training_successful:
-        model_output_path = model_output_dir
-    else:
+    #
+    # if model_training_successful:
+    #     model_output_path = model_output_dir
+    if not model_training_successful:
         with open(train_log, "a") as f:
             f.write("Model training failed. Exiting.\n")
         sys.exit("Model training failed. Exiting.")
 
     with open(train_log, "a") as f:
-        f.write("Training completed successfully, beginning inference.\n")
-    run_inference(model_name, model_output_path, generated_images_dir, placeholder_token, HYPERPARAMETERS)
-
-    with open(train_log, "a") as f:
-        f.write("Inference completed successfully.")
+        f.write("Training completed successfully\n")
+    # run_inference(model_name, model_output_path, generated_images_dir, placeholder_token, HYPERPARAMETERS)
+    #
+    # with open(train_log, "a") as f:
+    #     f.write("Inference completed successfully.")
 
 
 if __name__ == "__main__":

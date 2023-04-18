@@ -43,16 +43,16 @@ def run_training(target_images_dir, model_output_dir, model_name, instance_promp
     return os.path.exists(f"{model_output_dir}/checkpoint-{hyperparameters['max_train_steps']}")
 
 
-def run_inference(model_output_path, generated_images_dir, prompt, hyperparameters):
-    model_id = model_output_path
-    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
-
-    images = pipe(prompt,
-                  num_inference_steps=hyperparameters['num_inference_steps'],
-                  guidance_scale=hyperparameters['guidance_scale'])
-
-    for i, image in enumerate(images):
-        image.save(f"{generated_images_dir}/image_{i}.png")
+# def run_inference(model_output_path, generated_images_dir, prompt, hyperparameters):
+#     model_id = model_output_path
+#     pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
+#
+#     images = pipe(prompt,
+#                   num_inference_steps=hyperparameters['num_inference_steps'],
+#                   guidance_scale=hyperparameters['guidance_scale'])
+#
+#     for i, image in enumerate(images):
+#         image.save(f"{generated_images_dir}/image_{i}.png")
 
 
 def main(target_images_dir, model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
@@ -75,17 +75,17 @@ def main(target_images_dir, model_output_dir=None, model_name=DEFAULT_MODEL_NAME
     else:
         model_training_successful = True
 
-    if model_training_successful:
-        model_output_path = model_output_dir
-    else:
+    # if model_training_successful:
+    #     model_output_path = model_output_dir
+    if not model_training_successful:
         sys.exit("Model training failed. Exiting.")
 
     with open(train_log, "a") as f:
-        f.write("Training completed successfully, beginning inference.")
-    run_inference(model_output_path, generated_images_dir, inference_prompt, HYPERPARAMETERS)
-
-    with open(train_log, "a") as f:
-        f.write("Inference completed successfully.")
+        f.write("Training completed successfully.")
+    # run_inference(model_output_path, generated_images_dir, inference_prompt, HYPERPARAMETERS)
+    #
+    # with open(train_log, "a") as f:
+    #     f.write("Inference completed successfully.")
 
 
 if __name__ == "__main__":
