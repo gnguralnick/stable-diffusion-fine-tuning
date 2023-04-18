@@ -78,19 +78,36 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
     os.system(f"rm -rf {generated_images_dir}")
     os.system(f"mkdir -p {generated_images_dir}")
 
+    print(f"Model output directory: {model_output_dir}\n")
+    print(f"Generated images directory: {generated_images_dir}\n")
+    print(f"Model name: {model_name}\n")
+    print(f"Placeholder token: {placeholder_token}\n")
+    print(f"Initializer token: {initializer_token}\n")
+    print(f"Hyperparameters: {HYPERPARAMETERS}\n")
+    with open(train_log, "w") as f:
+        f.write(f"Model output directory: {model_output_dir}\n")
+        f.write(f"Generated images directory: {generated_images_dir}\n")
+        f.write(f"Model name: {model_name}\n")
+        f.write(f"Placeholder token: {placeholder_token}\n")
+        f.write(f"Initializer token: {initializer_token}\n")
+        f.write(f"Hyperparameters: {HYPERPARAMETERS}\n")
+
     if no_train:
+        print(f"Skipping training for the target images in {target_images_dir}.\n")
         if not os.path.exists(model_output_dir):
             sys.exit(f"Model output directory {model_output_dir} does not exist. Exiting.")
         with open(train_log, "a") as f:
             f.write(f"Skipping training for the target images in {target_images_dir}.\n")
         model_training_successful = True
     elif not resume_checkpoint:
-        with open(train_log, "w") as f:
+        print(f"Running textual inversion training for the target images in {target_images_dir}.\n")
+        with open(train_log, "a") as f:
             f.write(f"Running textual inversion training for the target images in {target_images_dir}.\n")
 
         model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
                                                  placeholder_token, initializer_token, HYPERPARAMETERS)
     else:
+        print(f"Resuming training from checkpoint {resume_checkpoint}.\n")
         with open(train_log, "a") as f:
             f.write(f"Resuming training from checkpoint {resume_checkpoint}.\n")
         model_training_successful = run_training(target_images_dir, model_output_dir, model_name,
