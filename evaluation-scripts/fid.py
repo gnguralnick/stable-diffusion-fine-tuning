@@ -3,18 +3,22 @@
 
 import os
 import argparse
+import warnings
+from scipy import linalg
 import torch
+import numpy as np
 import torchvision.transforms as transforms
 from load_images import load_images_from_directory
 
 from torchvision.models import inception_v3
+from torchvision.models.inception import Inception_V3_Weights
 
 
 def compute_fid(images1, images2):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # Load the Inception-v3 model
-    model = inception_v3(pretrained=True, transform_input=False).to(device)
+    model = inception_v3(transform_input=False, weights=Inception_V3_Weights.IMAGENET1K_V1).to(device)
     model = model.eval()
 
     # Preprocess images
@@ -35,10 +39,13 @@ def compute_fid(images1, images2):
     mu1, mu2 = features1.mean(0), features2.mean(0)
     sigma1, sigma2 = torch_cov(features1), torch_cov(features2)
 
-    # Compute the FID
-    fid = torch.norm(mu1 - mu2) ** 2 + torch.trace(sigma1 + sigma2 - 2 * torch.sqrt(torch.mm(sigma1, sigma2)))
+    sigma1_np, sigma2_np = sigma1.cpu().numpy(), sigma2.cpu().numpy()
 
-    return fid.item()
+    # Compute the FID
+    dist = np.linalg.norm(mu1.cpu().numpy() - mu2.cpu().numpy()) ** 2 + \
+           np.trace(sigma1_np + sigma2_np - 2 * linalg.sqrtm(np.dot(sigma1_np, sigma2_np)))
+
+    return dist
 
 
 def torch_cov(mat):
@@ -50,7 +57,7 @@ def main(target_images_dir, method_name, eval_output_dir=None, generated_images_
     target_images = load_images_from_directory(target_images_dir)
     target_images_dir_name = target_images_dir.split('/')[-1]
     if generated_images_dir is None:
-        generated_images_dir = target_images_dir.replace('target', 'generated') + f'/{method_name}'
+        generated_images_dir = '../generated-images/' + method_name + '/' + target_images_dir_name
     else:
         generated_images_dir = generated_images_dir
 

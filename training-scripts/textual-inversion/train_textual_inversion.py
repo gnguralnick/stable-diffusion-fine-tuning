@@ -16,7 +16,7 @@ HYPERPARAMETERS = {
     "num_inference_steps": 50,
     "guidance_scale": 7.5,
     "seed": 42,
-    "num_generations": 5,
+    "num_generations": 4,
 }
 
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"

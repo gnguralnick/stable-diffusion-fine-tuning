@@ -41,7 +41,7 @@ def main(target_images_dir, method_name, eval_output_dir=None, generated_images_
     target_images = load_images_from_directory(target_images_dir)
     target_images_dir_name = target_images_dir.split('/')[-1]
     if generated_images_dir is None:
-        generated_images_dir = target_images_dir.replace('target', 'generated') + f'/{method_name}'
+        generated_images_dir = '../generated-images/' + method_name + '/' + target_images_dir_name
     else:
         generated_images_dir = generated_images_dir
     generated_images = load_images_from_directory(generated_images_dir)
@@ -51,10 +51,10 @@ def main(target_images_dir, method_name, eval_output_dir=None, generated_images_
     print(f"Average CLIP Cosine Similarity: {avg_cosine_similarity}")
 
     if eval_output_dir is None:
-        eval_output_dir = f'../../evaluation-results/clip-distance/{target_images_dir_name}'
+        eval_output_dir = f'../evaluation-results/clip-distance/{target_images_dir_name}'
 
     os.makedirs(eval_output_dir, exist_ok=True)
-    output_file = os.path.join(args.eval_output_dir, f"{method_name}.txt")
+    output_file = os.path.join(eval_output_dir, f"{method_name}.txt")
 
     with open(output_file, 'w') as f:
         f.write(f"Average CLIP Cosine Similarity: {avg_cosine_similarity}\n")
