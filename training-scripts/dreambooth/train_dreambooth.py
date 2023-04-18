@@ -8,9 +8,9 @@ import argparse
 HYPERPARAMETERS = {
     "resolution": 512,
     "train_batch_size": 1,
-    "gradient_accumulation_steps": 4,
-    "max_train_steps": 1000,
-    "learning_rate": 1e-4,
+    "gradient_accumulation_steps": 1,
+    "max_train_steps": 400,
+    "learning_rate": 5e-6,
     "lr_scheduler": "constant",
     "lr_warmup_steps": 0,
     "num_inference_steps": 50,
@@ -23,33 +23,29 @@ HYPERPARAMETERS = {
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 
 
-def run_training(target_images_dir, model_output_dir, model_name, instance_prompt, validation_prompt, hyperparameters):
+def run_training(target_images_dir, model_output_dir, model_name, instance_prompt, hyperparameters):
     """Run the textual inversion training."""
-    os.system(f"accelerate launch train_dreambooth_lora.py \
-        --pretrained_model_name_or_path={model_name} \
+
+    os.system(f"accelerate launch train_dreambooth.py \
+        --pretrained_model_name_or_path={model_name}  \
         --instance_data_dir={target_images_dir} \
         --output_dir={model_output_dir} \
         --instance_prompt=\"{instance_prompt}\" \
         --resolution={hyperparameters['resolution']} \
         --train_batch_size={hyperparameters['train_batch_size']} \
         --gradient_accumulation_steps={hyperparameters['gradient_accumulation_steps']} \
-        --checkpointing_steps={hyperparameters['checkpointing_steps']} \
         --learning_rate={hyperparameters['learning_rate']} \
         --lr_scheduler=\"{hyperparameters['lr_scheduler']}\" \
         --lr_warmup_steps={hyperparameters['lr_warmup_steps']} \
         --max_train_steps={hyperparameters['max_train_steps']} \
-        --validation_prompt=\"{validation_prompt}\" \
-        --validation_epochs={hyperparameters['validation_epochs']} \
         --seed={hyperparameters['seed']}")
     # return whether the training was successful
     return os.path.exists(f"{model_output_dir}/checkpoint-{hyperparameters['max_train_steps']}")
 
 
-def run_inference(model_output_path, generated_images_dir, placeholder_token, hyperparameters):
+def run_inference(model_output_path, generated_images_dir, prompt, hyperparameters):
     model_id = model_output_path
     pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
-
-    prompt = f"A photo of a {placeholder_token}"
 
     images = pipe(prompt,
                   num_inference_steps=hyperparameters['num_inference_steps'],
@@ -60,7 +56,7 @@ def run_inference(model_output_path, generated_images_dir, placeholder_token, hy
 
 
 def main(target_images_dir, model_output_dir=None, model_name=DEFAULT_MODEL_NAME,
-         instance_prompt="<*>", generated_images_dir=None, train=True, train_log="training.log"):
+         instance_prompt="<*>", inference_prompt="<*>", generated_images_dir=None, train=True, train_log="training.log"):
     target_images_dir_name = args.target_images_dir.split("/")[-1]
 
     if model_output_dir is None:
@@ -86,7 +82,7 @@ def main(target_images_dir, model_output_dir=None, model_name=DEFAULT_MODEL_NAME
 
     with open(train_log, "a") as f:
         f.write("Training completed successfully, beginning inference.")
-    run_inference(model_output_path, generated_images_dir, placeholder_token, HYPERPARAMETERS)
+    run_inference(model_output_path, generated_images_dir, inference_prompt, HYPERPARAMETERS)
 
     with open(train_log, "a") as f:
         f.write("Inference completed successfully.")
@@ -99,6 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_output_dir", type=str, required=False)
     parser.add_argument("--model_name", type=str, required=False, default=DEFAULT_MODEL_NAME)
     parser.add_argument("--instance_prompt", type=str, required=False, default="<*>")
+    parser.add_argument("--inference_prompt", type=str, required=False, default="<*>")
     parser.add_argument("--generated_images_dir", type=str, required=False)
     parser.add_argument("--train", type=bool, required=False, default=True)
     args = parser.parse_args()
