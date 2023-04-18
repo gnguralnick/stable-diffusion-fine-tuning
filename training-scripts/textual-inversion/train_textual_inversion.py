@@ -73,6 +73,7 @@ def main(target_images_dir, initializer_token="object", model_output_dir=None, m
         generated_images_dir = f"../../generated-images/textual-inversion/{target_images_dir_name}"
 
     os.system(f"rm -rf {generated_images_dir}")
+    os.system(f"mkdir -p {generated_images_dir}")
 
     if no_train:
         if not os.path.exists(model_output_dir):
