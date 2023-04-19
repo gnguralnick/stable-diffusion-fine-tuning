@@ -4,7 +4,7 @@ from run_inference import run_inference
 import os
 
 
-def run_all_textual_inversion_inference(checkpoint_steps):
+def run_all_textual_inversion_inference(checkpoint_steps=None):
     generated_dir = "../generated-images"
     target_complex_dir = "../target-complex-images"
 
