@@ -73,7 +73,7 @@ def run_eval(method_name, checkpoint_steps=None):
 
     overall_fid /= len(edit_prompts)
     overall_clip /= len(edit_prompts)
-    results_file.write(f"overall,overall,{overall_fid},{overall_clip}\n")  # overall text similarity scores
+    results_file.write(f"edit,overall,{overall_fid},{overall_clip}\n")  # overall text similarity scores
 
     print("Finished complex prompt evaluation.")
 
