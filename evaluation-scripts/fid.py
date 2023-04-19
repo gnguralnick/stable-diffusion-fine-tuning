@@ -41,9 +41,13 @@ def compute_fid(images1, images2):
 
     sigma1_np, sigma2_np = sigma1.cpu().numpy(), sigma2.cpu().numpy()
 
+    covmean = linalg.sqrtm(np.dot(sigma1_np, sigma2_np))
+    if np.iscomplexobj(covmean):
+       covmean = covmean.real
+
     # Compute the FID
     dist = np.linalg.norm(mu1.cpu().numpy() - mu2.cpu().numpy()) ** 2 + \
-           np.trace(sigma1_np + sigma2_np - 2 * linalg.sqrtm(np.dot(sigma1_np, sigma2_np)))
+           np.trace(sigma1_np + sigma2_np - 2 * covmean)
 
     return dist
 
