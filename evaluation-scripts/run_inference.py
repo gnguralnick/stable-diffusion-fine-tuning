@@ -60,8 +60,8 @@ def run_inference(generated_images_dir, method, target_name,
     if not os.path.exists(subdir_basic):
         os.makedirs(subdir_basic)
     for subdir_complex in subdirs_complex:
-        if not os.path.exists(subdir_complex):
-            os.makedirs(subdir_complex)
+        if not os.path.exists(subdirs_complex[subdir_complex]):
+            os.makedirs(subdirs_complex[subdir_complex])
 
     print(f"Saving images to {subdir}...")
 
