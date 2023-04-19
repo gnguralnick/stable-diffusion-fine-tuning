@@ -45,12 +45,11 @@ def run_eval(method_name, checkpoint_steps=None):
     overall_fid = 0
     overall_clip = 0
     for prompt in edit_prompts:
-
-        prompt_target_dir = f"../target-complex-images/{prompt}"
-        prompt_target_names = os.listdir(prompt_target_dir)
         prompt_overall_fid = 0
         prompt_overall_clip = 0
         for target_name in prompt_target_names:
+            prompt_target_dir = f"../target-complex-images/{method_name}/{target_name}/{prompt}"
+            prompt_target_names = os.listdir(prompt_target_dir)
             target_dir = os.path.join(prompt_target_dir, target_name)
             prompt_dir = os.path.join(generated_dir, target_name, prompt)
             if checkpoint_steps is not None:
