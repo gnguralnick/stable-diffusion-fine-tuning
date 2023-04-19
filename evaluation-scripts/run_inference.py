@@ -56,7 +56,7 @@ def run_inference(generated_images_dir, method, target_name,
     if not os.path.exists(subdir):
         os.makedirs(subdir)
     subdir_basic = subdir + "basic/"
-    subdirs_complex = [subdir + f"{edit_prompt}/" for edit_prompt in edit_prompts]
+    subdirs_complex = {edit_prompt: subdir + f"{edit_prompt}/" for edit_prompt in edit_prompts.keys()}
     if not os.path.exists(subdir_basic):
         os.makedirs(subdir_basic)
     for subdir_complex in subdirs_complex:
@@ -72,13 +72,13 @@ def run_inference(generated_images_dir, method, target_name,
 
         image.save(f"{subdir_basic}/image_{i}{f'-checkpoint-{checkpoint_steps}' if checkpoint_steps else ''}.png")
 
-        for j in range(len(edit_prompts)):
-            image = pipe(edit_prompts[j].replace("<placeholder>", placeholder_token),
+        for edit_prompt in edit_prompts:
+            image = pipe(edit_prompts[edit_prompt].replace("<placeholder>", placeholder_token),
                          num_inference_steps=hyperparameters['num_inference_steps'],
                          guidance_scale=hyperparameters['guidance_scale']).images[0]
 
             image.save(
-                f"{subdirs_complex[j]}/image_{i}{f'-checkpoint-{checkpoint_steps}' if checkpoint_steps else ''}.png")
+                f"{subdirs_complex[edit_prompt]}/image_{i}{f'-checkpoint-{checkpoint_steps}' if checkpoint_steps else ''}.png")
 
 
 if __name__ == "__main__":
