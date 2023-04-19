@@ -7,13 +7,15 @@ import fid
 
 
 def run_eval(method_name, checkpoint_steps=None):
-
     if checkpoint_steps is not None:
         results_file = open(f"../evaluation-results/{method_name}-step-{checkpoint_steps}.txt", "w")
     else:
         results_file = open(f"../evaluation-results/{method_name}.txt", "w")
     results_file.write("prompt-type,target-name,avg-fid,avg-clip")
     generated_dir = f"../generated-images/{method_name}/"
+
+    print(f"Running evaluation for {method_name} with checkpoint steps {checkpoint_steps}...")
+    print(f"Writing results to {results_file.name}...")
 
     # compute FID and CLIP scores for basic prompt
 
@@ -36,6 +38,8 @@ def run_eval(method_name, checkpoint_steps=None):
     overall_fid /= len(basic_target_names)
     overall_clip /= len(basic_target_names)
     results_file.write(f"basic,overall,{overall_fid},{overall_clip}")  # overall image similarity scores
+
+    print("Finished basic prompt evaluation.")
 
     # compute FID and CLIP scores for edit prompts
     overall_fid = 0
@@ -68,6 +72,8 @@ def run_eval(method_name, checkpoint_steps=None):
     overall_fid /= len(edit_prompts)
     overall_clip /= len(edit_prompts)
     results_file.write(f"overall,overall,{overall_fid},{overall_clip}")  # overall text similarity scores
+
+    print("Finished complex prompt evaluation.")
 
     results_file.close()
 
