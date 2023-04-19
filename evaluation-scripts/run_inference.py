@@ -7,7 +7,7 @@ import torch
 HYPERPARAMETERS = {
     "num_inference_steps": 50,
     "guidance_scale": 7.5,
-    "num_generations": 10
+    "num_generations": 5
 }
 
 edit_prompts = {
@@ -27,9 +27,11 @@ BASIC_PROMPT = "A photo of a <placeholder>"
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 
 
-def run_inference(generated_images_dir, placeholder_token, hyperparameters,
-                  method, target_name, model_path=DEFAULT_MODEL_NAME, learned_embeddings_path=None,
+def run_inference(generated_images_dir, method, target_name,
+                  placeholder_token="<*>", hyperparameters=None, model_path=DEFAULT_MODEL_NAME, learned_embeddings_path=None,
                   checkpoint_steps=None):
+    if hyperparameters is None:
+        hyperparameters = HYPERPARAMETERS
     print(f"Running inference for {target_name} from method {method}")
     print(f"Model path: {model_path}")
     print(f"Learned embeddings path: {learned_embeddings_path}")
@@ -88,9 +90,8 @@ if __name__ == "__main__":
     parser.add_argument("--target_name", type=str, required=True)
     parser.add_argument("--learned_embeddings_path", type=str, default=None)
     parser.add_argument("--checkpoint_steps", type=int, default=None)
-    parser.add_argument("--complex_prompt", action="store_true")
     args = parser.parse_args()
 
-    run_inference(args.generated_images_dir, args.placeholder_token, HYPERPARAMETERS,
-                  args.method, args.target_name, args.model_output_path, args.learned_embeddings_path,
+    run_inference(args.generated_images_dir, args.method, args.target_name,
+                  args.placeholder_token, HYPERPARAMETERS, args.model_output_path, args.learned_embeddings_path,
                   args.checkpoint_steps)
