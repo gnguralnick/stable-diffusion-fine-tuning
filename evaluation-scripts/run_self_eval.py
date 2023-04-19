@@ -17,6 +17,8 @@ def run_self_eval(method_name, checkpoint_steps=None):
 
     results_file.write("prompt-type,target-name,avg-fid,avg-clip\n")
 
+    print(f"Running self evaluation for {method_name} with checkpoint steps {checkpoint_steps}...")
+
     target_dir = "../target-images"
     target_names = os.listdir(target_dir)
 
