@@ -56,7 +56,7 @@ def run_inference(generated_images_dir, method, target_name,
     if not os.path.exists(subdir):
         os.makedirs(subdir)
     subdir_basic = subdir + "basic/"
-    subdirs_complex = {edit_prompt: subdir + f"{edit_prompt}/" for edit_prompt in edit_prompts.keys()}
+    subdirs_complex = {edit_prompt: (subdir + f"{edit_prompt}/") for edit_prompt in edit_prompts.keys()}
     if not os.path.exists(subdir_basic):
         os.makedirs(subdir_basic)
     for subdir_complex in subdirs_complex:
