@@ -11,7 +11,7 @@ def run_eval(method_name, checkpoint_steps=None):
         results_file = open(f"../evaluation-results/{method_name}-step-{checkpoint_steps}.txt", "w")
     else:
         results_file = open(f"../evaluation-results/{method_name}.txt", "w")
-    results_file.write("prompt-type,target-name,avg-fid,avg-clip")
+    results_file.write("prompt-type,target-name,avg-fid,avg-clip\n")
     generated_dir = f"../generated-images/{method_name}/"
 
     print(f"Running evaluation for {method_name} with checkpoint steps {checkpoint_steps}...")
@@ -30,14 +30,14 @@ def run_eval(method_name, checkpoint_steps=None):
         target_dir = os.path.join(basic_target_dir, target_name)
         avg_fid = fid.main(target_dir, basic_prompt_dir)
         avg_clip = clip_distance.main(target_dir, basic_prompt_dir)
-        results_file.write(f"basic,{target_name},{avg_fid},{avg_clip}")
+        results_file.write(f"basic,{target_name},{avg_fid},{avg_clip}\n")
 
         overall_fid += avg_fid
         overall_clip += avg_clip
 
     overall_fid /= len(target_names)
     overall_clip /= len(target_names)
-    results_file.write(f"basic,overall,{overall_fid},{overall_clip}")  # overall image similarity scores
+    results_file.write(f"basic,overall,{overall_fid},{overall_clip}\n")  # overall image similarity scores
 
     print("Finished basic prompt evaluation.")
 
@@ -54,21 +54,21 @@ def run_eval(method_name, checkpoint_steps=None):
                 prompt_dir = os.path.join(prompt_dir, f"step-{checkpoint_steps}")
             avg_fid = fid.main(prompt_target_dir, prompt_dir)
             avg_clip = clip_distance.main(prompt_target_dir, prompt_dir)
-            results_file.write(f"{prompt},{target_name},{avg_fid},{avg_clip}")
+            results_file.write(f"{prompt},{target_name},{avg_fid},{avg_clip}\n")
 
             prompt_overall_fid += avg_fid
             prompt_overall_clip += avg_clip
 
         prompt_overall_fid /= len(target_names)
         prompt_overall_clip /= len(target_names)
-        results_file.write(f"{prompt},overall,{prompt_overall_fid},{prompt_overall_clip}")
+        results_file.write(f"{prompt},overall,{prompt_overall_fid},{prompt_overall_clip}\n")
 
         overall_fid += prompt_overall_fid
         overall_clip += prompt_overall_clip
 
     overall_fid /= len(edit_prompts)
     overall_clip /= len(edit_prompts)
-    results_file.write(f"overall,overall,{overall_fid},{overall_clip}")  # overall text similarity scores
+    results_file.write(f"overall,overall,{overall_fid},{overall_clip}\n")  # overall text similarity scores
 
     print("Finished complex prompt evaluation.")
 
