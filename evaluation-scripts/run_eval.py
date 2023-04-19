@@ -49,12 +49,11 @@ def run_eval(method_name, checkpoint_steps=None):
         prompt_overall_clip = 0
         for target_name in target_names:
             prompt_target_dir = f"../target-complex-images/{method_name}/{target_name}/{prompt}"
-            target_dir = os.path.join(prompt_target_dir, target_name)
             prompt_dir = os.path.join(generated_dir, target_name, prompt)
             if checkpoint_steps is not None:
                 prompt_dir = os.path.join(prompt_dir, f"step-{checkpoint_steps}")
-            avg_fid = fid.main(target_dir, prompt_dir)
-            avg_clip = clip_distance.main(target_dir, prompt_dir)
+            avg_fid = fid.main(prompt_target_dir, prompt_dir)
+            avg_clip = clip_distance.main(prompt_target_dir, prompt_dir)
             results_file.write(f"{prompt},{target_name},{avg_fid},{avg_clip}")
 
             prompt_overall_fid += avg_fid
