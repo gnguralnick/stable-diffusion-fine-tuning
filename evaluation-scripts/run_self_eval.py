@@ -11,9 +11,9 @@ def run_self_eval(method_name, checkpoint_steps=None):
     # this is to provide a baseline for the evaluation
 
     if checkpoint_steps is not None:
-        results_file = open(f"../evaluation-results/{method_name}-step-{checkpoint_steps}.txt", "w")
+        results_file = open(f"../evaluation-results/{method_name}-self-step-{checkpoint_steps}.txt", "w")
     else:
-        results_file = open(f"../evaluation-results/{method_name}.txt", "w")
+        results_file = open(f"../evaluation-results/{method_name}-self.txt", "w")
 
     results_file.write("prompt-type,target-name,avg-fid,avg-clip\n")
 
@@ -24,9 +24,9 @@ def run_self_eval(method_name, checkpoint_steps=None):
     overall_clip = 0
 
     for target_name in target_names:
-        target_dir = os.path.join(target_dir, target_name)
-        avg_fid = fid.main(target_dir, target_dir)
-        avg_clip = clip_distance.main(target_dir, target_dir)
+        full_target_dir = os.path.join(target_dir, target_name)
+        avg_fid = fid.main(full_target_dir, full_target_dir)
+        avg_clip = clip_distance.main(full_target_dir, full_target_dir)
         results_file.write(f"basic,{target_name},{avg_fid},{avg_clip}\n")
 
         overall_fid += avg_fid
