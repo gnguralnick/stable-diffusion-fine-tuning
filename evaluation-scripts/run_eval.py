@@ -20,10 +20,10 @@ def run_eval(method_name, checkpoint_steps=None):
     # compute FID and CLIP scores for basic prompt
 
     basic_target_dir = "../target-images"
-    basic_target_names = os.listdir(basic_target_dir)
+    target_names = os.listdir(basic_target_dir)
     overall_fid = 0
     overall_clip = 0
-    for target_name in basic_target_names:
+    for target_name in target_names:
         basic_prompt_dir = os.path.join(generated_dir, target_name, "basic")
         if checkpoint_steps is not None:
             basic_prompt_dir = os.path.join(basic_prompt_dir, f"step-{checkpoint_steps}")
@@ -35,8 +35,8 @@ def run_eval(method_name, checkpoint_steps=None):
         overall_fid += avg_fid
         overall_clip += avg_clip
 
-    overall_fid /= len(basic_target_names)
-    overall_clip /= len(basic_target_names)
+    overall_fid /= len(target_names)
+    overall_clip /= len(target_names)
     results_file.write(f"basic,overall,{overall_fid},{overall_clip}")  # overall image similarity scores
 
     print("Finished basic prompt evaluation.")
@@ -47,9 +47,8 @@ def run_eval(method_name, checkpoint_steps=None):
     for prompt in edit_prompts:
         prompt_overall_fid = 0
         prompt_overall_clip = 0
-        for target_name in prompt_target_names:
+        for target_name in target_names:
             prompt_target_dir = f"../target-complex-images/{method_name}/{target_name}/{prompt}"
-            prompt_target_names = os.listdir(prompt_target_dir)
             target_dir = os.path.join(prompt_target_dir, target_name)
             prompt_dir = os.path.join(generated_dir, target_name, prompt)
             if checkpoint_steps is not None:
@@ -61,8 +60,8 @@ def run_eval(method_name, checkpoint_steps=None):
             prompt_overall_fid += avg_fid
             prompt_overall_clip += avg_clip
 
-        prompt_overall_fid /= len(prompt_target_names)
-        prompt_overall_clip /= len(prompt_target_names)
+        prompt_overall_fid /= len(target_names)
+        prompt_overall_clip /= len(target_names)
         results_file.write(f"{prompt},overall,{prompt_overall_fid},{prompt_overall_clip}")
 
         overall_fid += prompt_overall_fid
