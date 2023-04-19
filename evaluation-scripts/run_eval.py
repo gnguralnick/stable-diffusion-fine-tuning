@@ -12,7 +12,9 @@ def run_eval(method_name, checkpoint_steps=None):
     else:
         results_file = open(f"../evaluation-results/{method_name}.txt", "w")
     results_file.write("prompt-type,target-name,avg-fid,avg-clip\n")
-    generated_dir = f"../generated-images/{method_name}/"
+    generated_dir = f"../generated-images/{method_name}"
+    if checkpoint_steps:
+        generated_dir += f"-step-{checkpoint_steps}"
 
     print(f"Running evaluation for {method_name} with checkpoint steps {checkpoint_steps}...")
     print(f"Writing results to {results_file.name}...")
@@ -48,7 +50,10 @@ def run_eval(method_name, checkpoint_steps=None):
         prompt_overall_fid = 0
         prompt_overall_clip = 0
         for target_name in target_names:
-            prompt_target_dir = f"../target-complex-images/{method_name}/{target_name}/{prompt}"
+            prompt_target_dir = f"../target-complex-images/{method_name}"
+            if checkpoint_steps:
+                prompt_target_dir += f"-step-{checkpoint_steps}"
+            prompt_target_dir = os.path.join(prompt_target_dir, target_name, prompt)
             prompt_dir = os.path.join(generated_dir, target_name, prompt)
             if checkpoint_steps is not None:
                 prompt_dir = os.path.join(prompt_dir, f"step-{checkpoint_steps}")
@@ -68,7 +73,7 @@ def run_eval(method_name, checkpoint_steps=None):
 
     overall_fid /= len(edit_prompts)
     overall_clip /= len(edit_prompts)
-    results_file.write(f"overall,overall,{overall_fid},{overall_clip}\n")  # overall text similarity scores
+    results_file.write(f"edit,overall,{overall_fid},{overall_clip}\n")  # overall text similarity scores
 
     print("Finished complex prompt evaluation.")
 

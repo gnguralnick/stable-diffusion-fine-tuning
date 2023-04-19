@@ -50,6 +50,8 @@ def run_inference(generated_images_dir, method, target_name,
                                     local_files_only=True)
 
     subdir = generated_images_dir + f"/{method}"
+    if checkpoint_steps:
+        subdir += f"-step-{checkpoint_steps}"
     if not os.path.exists(subdir):
         os.makedirs(subdir)
     subdir += f"/{target_name}/"
@@ -70,7 +72,7 @@ def run_inference(generated_images_dir, method, target_name,
                      num_inference_steps=hyperparameters['num_inference_steps'],
                      guidance_scale=hyperparameters['guidance_scale']).images[0]
 
-        image.save(os.path.join(subdir_basic, f"image_{i}{f'-checkpoint-{checkpoint_steps}' if checkpoint_steps else ''}.png"))
+        image.save(os.path.join(subdir_basic, f"image_{i}.png"))
 
         for edit_prompt in edit_prompts:
             image = pipe(edit_prompts[edit_prompt].replace("<placeholder>", placeholder_token),
@@ -78,7 +80,7 @@ def run_inference(generated_images_dir, method, target_name,
                          guidance_scale=hyperparameters['guidance_scale']).images[0]
 
             image.save(
-                os.path.join(subdirs_complex[edit_prompt], f"image_{i}{f'-checkpoint-{checkpoint_steps}' if checkpoint_steps else ''}.png"))
+                os.path.join(subdirs_complex[edit_prompt], f"image_{i}.png"))
 
 
 if __name__ == "__main__":
