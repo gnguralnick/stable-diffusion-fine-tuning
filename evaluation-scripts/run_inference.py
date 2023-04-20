@@ -119,7 +119,7 @@ def run_inference(generated_images_dir, method, target_name,
         # pipe.unet.load_attn_procs(tensors_path, local_files_only=True, use_safetensors=True)
         # get torch device for cuda
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        pipe = load_lora_weights(pipe, tensors_path, multiplier=1.0, device=device, dtype=torch.float16)
+        pipe = load_lora_weights(pipe, tensors_path, multiplier=1.0, device="cpu", dtype=torch.float16)
 
     subdir = generated_images_dir + f"/{method}"
     if checkpoint_steps:
