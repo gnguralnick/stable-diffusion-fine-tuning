@@ -51,7 +51,7 @@ def run_inference(generated_images_dir, method, target_name,
                                     weight_name=weight_name,
                                     local_files_only=True)
     elif method == "lora":
-        tensors_path = os.path.join(learned_embeddings_path, f"{target_name}-000008.safetensors")
+        tensors_path = os.path.join(learned_embeddings_path, f"{target_name}-000008.bin")
         print(f"Loading tensors from {tensors_path}...")
         pipe.unet.load_attn_procs(tensors_path)
 
