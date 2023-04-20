@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 import torch
 
 HYPERPARAMETERS = {
@@ -42,6 +42,8 @@ def run_inference(generated_images_dir, method, target_name,
         pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
     else:
         pipe = StableDiffusionPipeline.from_pretrained(model_id)
+
+    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
     if method == "textual-inversion":
         weight_name = f"learned_embeds-steps-{checkpoint_steps}.bin" if checkpoint_steps else "learned_embeds.bin"
