@@ -1,8 +1,11 @@
 import argparse
 import os
+from collections import defaultdict
 
 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 import torch
+
+from safetensors.torch import load_file
 
 HYPERPARAMETERS = {
     "num_inference_steps": 50,
@@ -25,6 +28,65 @@ edit_prompts = {
 BASIC_PROMPT = "A photo of a <placeholder>"
 
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
+
+
+def load_lora_weights(pipeline, checkpoint_path, multiplier, device, dtype):
+    LORA_PREFIX_UNET = "lora_unet"
+    LORA_PREFIX_TEXT_ENCODER = "lora_te"
+    # load LoRA weight from .safetensors
+    state_dict = load_file(checkpoint_path, device=device)
+
+    updates = defaultdict(dict)
+    for key, value in state_dict.items():
+        # it is suggested to print out the key, it usually will be something like below
+        # "lora_te_text_model_encoder_layers_0_self_attn_k_proj.lora_down.weight"
+
+        layer, elem = key.split('.', 1)
+        updates[layer][elem] = value
+
+    # directly update weight in diffusers model
+    for layer, elems in updates.items():
+
+        if "text" in layer:
+            layer_infos = layer.split(LORA_PREFIX_TEXT_ENCODER + "_")[-1].split("_")
+            curr_layer = pipeline.text_encoder
+        else:
+            layer_infos = layer.split(LORA_PREFIX_UNET + "_")[-1].split("_")
+            curr_layer = pipeline.unet
+
+        # find the target layer
+        temp_name = layer_infos.pop(0)
+        while len(layer_infos) > -1:
+            try:
+                curr_layer = curr_layer.__getattr__(temp_name)
+                if len(layer_infos) > 0:
+                    temp_name = layer_infos.pop(0)
+                elif len(layer_infos) == 0:
+                    break
+            except Exception:
+                if len(temp_name) > 0:
+                    temp_name += "_" + layer_infos.pop(0)
+                else:
+                    temp_name = layer_infos.pop(0)
+
+        # get elements for this layer
+        weight_up = elems['lora_up.weight'].to(dtype)
+        weight_down = elems['lora_down.weight'].to(dtype)
+        alpha = elems['alpha']
+        if alpha:
+            alpha = alpha.item() / weight_up.shape[1]
+        else:
+            alpha = 1.0
+
+        # update weight
+        if len(weight_up.shape) == 4:
+            curr_layer.weight.data += multiplier * alpha * torch.mm(weight_up.squeeze(3).squeeze(2),
+                                                                    weight_down.squeeze(3).squeeze(2)).unsqueeze(
+                2).unsqueeze(3)
+        else:
+            curr_layer.weight.data += multiplier * alpha * torch.mm(weight_up, weight_down)
+
+    return pipeline
 
 
 def run_inference(generated_images_dir, method, target_name,
@@ -53,8 +115,9 @@ def run_inference(generated_images_dir, method, target_name,
     elif method == "lora":
         # tensors_path = os.path.join(learned_embeddings_path, f"{target_name}-000008.safetensors")
         tensors_path = learned_embeddings_path
-        print(f"Loading tensors from {tensors_path}...")
-        pipe.unet.load_attn_procs(tensors_path, local_files_only=True, use_safetensors=True)
+        # print(f"Loading tensors from {tensors_path}...")
+        # pipe.unet.load_attn_procs(tensors_path, local_files_only=True, use_safetensors=True)
+        pipe = load_lora_weights(pipe, tensors_path, multiplier=1.0, device="cuda", dtype=torch.float16)
 
     subdir = generated_images_dir + f"/{method}"
     if checkpoint_steps:
