@@ -137,14 +137,14 @@ def run_inference(generated_images_dir, method, target_name,
     print(f"Saving images to {subdir}...")
 
     for i in range(hyperparameters['num_generations']):
-        image = pipe(BASIC_PROMPT.replace("<placeholder>", target_name),
+        image = pipe(BASIC_PROMPT.replace("<placeholder>", placeholder_token),
                      num_inference_steps=hyperparameters['num_inference_steps'],
                      guidance_scale=hyperparameters['guidance_scale']).images[0]
 
         image.save(os.path.join(subdir_basic, f"image_{i}.png"))
 
         for edit_prompt in edit_prompts:
-            image = pipe(edit_prompts[edit_prompt].replace("<placeholder>", target_name),
+            image = pipe(edit_prompts[edit_prompt].replace("<placeholder>", placeholder_token),
                          num_inference_steps=hyperparameters['num_inference_steps'],
                          guidance_scale=hyperparameters['guidance_scale']).images[0]
 
