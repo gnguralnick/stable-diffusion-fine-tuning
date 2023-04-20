@@ -1,8 +1,10 @@
 import argparse
 import os
+from collections import defaultdict
 
 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 import torch
+
 from safetensors.torch import load_file
 
 HYPERPARAMETERS = {
@@ -27,30 +29,29 @@ BASIC_PROMPT = "A photo of a <placeholder>"
 
 DEFAULT_MODEL_NAME = "runwayml/stable-diffusion-v1-5"
 
-def load_lora_weights(pipeline, checkpoint_path):
-    # load base model
-    pipeline.to("cuda")
+
+def load_lora_weights(pipeline, checkpoint_path, multiplier, device, dtype):
     LORA_PREFIX_UNET = "lora_unet"
     LORA_PREFIX_TEXT_ENCODER = "lora_te"
-    alpha = 0.75
     # load LoRA weight from .safetensors
-    state_dict = load_file(checkpoint_path, device="cuda")
-    visited = []
+    state_dict = load_file(checkpoint_path, device=device)
 
-    # directly update weight in diffusers model
-    for key in state_dict:
+    updates = defaultdict(dict)
+    for key, value in state_dict.items():
         # it is suggested to print out the key, it usually will be something like below
         # "lora_te_text_model_encoder_layers_0_self_attn_k_proj.lora_down.weight"
 
-        # as we have set the alpha beforehand, so just skip
-        if ".alpha" in key or key in visited:
-            continue
+        layer, elem = key.split('.', 1)
+        updates[layer][elem] = value
 
-        if "text" in key:
-            layer_infos = key.split(".")[0].split(LORA_PREFIX_TEXT_ENCODER + "_")[-1].split("_")
+    # directly update weight in diffusers model
+    for layer, elems in updates.items():
+
+        if "text" in layer:
+            layer_infos = layer.split(LORA_PREFIX_TEXT_ENCODER + "_")[-1].split("_")
             curr_layer = pipeline.text_encoder
         else:
-            layer_infos = key.split(".")[0].split(LORA_PREFIX_UNET + "_")[-1].split("_")
+            layer_infos = layer.split(LORA_PREFIX_UNET + "_")[-1].split("_")
             curr_layer = pipeline.unet
 
         # find the target layer
@@ -68,29 +69,25 @@ def load_lora_weights(pipeline, checkpoint_path):
                 else:
                     temp_name = layer_infos.pop(0)
 
-        pair_keys = []
-        if "lora_down" in key:
-            pair_keys.append(key.replace("lora_down", "lora_up"))
-            pair_keys.append(key)
+        # get elements for this layer
+        weight_up = elems['lora_up.weight'].to(dtype)
+        weight_down = elems['lora_down.weight'].to(dtype)
+        alpha = elems['alpha']
+        if alpha:
+            alpha = alpha.item() / weight_up.shape[1]
         else:
-            pair_keys.append(key)
-            pair_keys.append(key.replace("lora_up", "lora_down"))
+            alpha = 1.0
 
         # update weight
-        if len(state_dict[pair_keys[0]].shape) == 4:
-            weight_up = state_dict[pair_keys[0]].squeeze(3).squeeze(2).to(torch.float32)
-            weight_down = state_dict[pair_keys[1]].squeeze(3).squeeze(2).to(torch.float32)
-            curr_layer.weight.data += alpha * torch.mm(weight_up, weight_down).unsqueeze(2).unsqueeze(3)
+        if len(weight_up.shape) == 4:
+            curr_layer.weight.data += multiplier * alpha * torch.mm(weight_up.squeeze(3).squeeze(2),
+                                                                    weight_down.squeeze(3).squeeze(2)).unsqueeze(
+                2).unsqueeze(3)
         else:
-            weight_up = state_dict[pair_keys[0]].to(torch.float32)
-            weight_down = state_dict[pair_keys[1]].to(torch.float32)
-            curr_layer.weight.data += alpha * torch.mm(weight_up, weight_down)
-
-        # update visited list
-        for item in pair_keys:
-            visited.append(item)
+            curr_layer.weight.data += multiplier * alpha * torch.mm(weight_up, weight_down)
 
     return pipeline
+
 
 def run_inference(generated_images_dir, method, target_name,
                   placeholder_token="<*>", hyperparameters=None, model_path=DEFAULT_MODEL_NAME, learned_embeddings_path=None,
@@ -107,6 +104,8 @@ def run_inference(generated_images_dir, method, target_name,
         pipe = StableDiffusionPipeline.from_pretrained(DEFAULT_MODEL_NAME, torch_dtype=torch.float16).to("cuda")
     else:
         pipe = StableDiffusionPipeline.from_pretrained(model_id)
+
+    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
     if method == "textual-inversion":
         weight_name = f"learned_embeds-steps-{checkpoint_steps}.bin" if checkpoint_steps else "learned_embeds.bin"
