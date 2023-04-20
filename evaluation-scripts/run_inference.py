@@ -101,7 +101,7 @@ def run_inference(generated_images_dir, method, target_name,
 
     model_id = model_path
     if torch.cuda.is_available():
-        pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
+        pipe = StableDiffusionPipeline.from_pretrained(DEFAULT_MODEL_NAME, torch_dtype=torch.float16).to("cuda")
     else:
         pipe = StableDiffusionPipeline.from_pretrained(model_id)
 
@@ -113,13 +113,10 @@ def run_inference(generated_images_dir, method, target_name,
                                     weight_name=weight_name,
                                     local_files_only=True)
     elif method == "lora":
-        # tensors_path = os.path.join(learned_embeddings_path, f"{target_name}-000008.safetensors")
-        tensors_path = learned_embeddings_path
-        # print(f"Loading tensors from {tensors_path}...")
-        # pipe.unet.load_attn_procs(tensors_path, local_files_only=True, use_safetensors=True)
-        # get torch device for cuda
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        pipe = load_lora_weights(pipe, tensors_path, multiplier=1.0, device="cpu", dtype=torch.float16)
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+        # weight_name = f"{model_path}/"
+        # pipe.unet.load_attn_procs(model_path, use_safetensors=True)
+        pipe = load_lora_weights(pipe, model_path)
 
     subdir = generated_images_dir + f"/{method}"
     if checkpoint_steps:
@@ -140,14 +137,14 @@ def run_inference(generated_images_dir, method, target_name,
     print(f"Saving images to {subdir}...")
 
     for i in range(hyperparameters['num_generations']):
-        image = pipe(BASIC_PROMPT.replace("<placeholder>", placeholder_token),
+        image = pipe(BASIC_PROMPT.replace("<placeholder>", target_name),
                      num_inference_steps=hyperparameters['num_inference_steps'],
                      guidance_scale=hyperparameters['guidance_scale']).images[0]
 
         image.save(os.path.join(subdir_basic, f"image_{i}.png"))
 
         for edit_prompt in edit_prompts:
-            image = pipe(edit_prompts[edit_prompt].replace("<placeholder>", placeholder_token),
+            image = pipe(edit_prompts[edit_prompt].replace("<placeholder>", target_name),
                          num_inference_steps=hyperparameters['num_inference_steps'],
                          guidance_scale=hyperparameters['guidance_scale']).images[0]
 
