@@ -54,7 +54,7 @@ def run_inference(generated_images_dir, method, target_name,
         # tensors_path = os.path.join(learned_embeddings_path, f"{target_name}-000008.safetensors")
         tensors_path = learned_embeddings_path
         print(f"Loading tensors from {tensors_path}...")
-        pipe.unet.load_attn_procs(tensors_path, local_files_only=True)
+        pipe.unet.load_attn_procs(tensors_path, local_files_only=True, use_safetensors=True)
 
     subdir = generated_images_dir + f"/{method}"
     if checkpoint_steps:
