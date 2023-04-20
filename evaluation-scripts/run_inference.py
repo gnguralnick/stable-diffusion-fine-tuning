@@ -116,7 +116,7 @@ def run_inference(generated_images_dir, method, target_name,
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
         # weight_name = f"{model_path}/"
         # pipe.unet.load_attn_procs(model_path, use_safetensors=True)
-        pipe = load_lora_weights(pipe, model_path)
+        pipe = load_lora_weights(pipe, model_path, 1.0, "cuda", torch.float16)
 
     subdir = generated_images_dir + f"/{method}"
     if checkpoint_steps:
