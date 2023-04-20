@@ -48,6 +48,9 @@ def run_inference(generated_images_dir, method, target_name,
         pipe.load_textual_inversion(learned_embeddings_path,
                                     weight_name=weight_name,
                                     local_files_only=True)
+    elif method == "lora":
+        tensors_path = os.path.join(learned_embeddings_path, f"{target_name}-000008.safetensors")
+        pipe.unet.load_attn_procs(tensors_path)
 
     subdir = generated_images_dir + f"/{method}"
     if checkpoint_steps:
